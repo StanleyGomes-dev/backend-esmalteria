@@ -12,7 +12,7 @@ def inicializar_banco():
     conn = sqlite3.connect('agendamentos.db')
     cursor = conn.cursor()
     
-    # 1. CRIA A TABELA DE AGENDAMENTOS (Esta parte estava faltando!)
+    # --- PARTE 1: CRIA TABELA DE AGENDAMENTOS (ISSO QUE FALTA!) ---
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS agendamentos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,7 +24,7 @@ def inicializar_banco():
         )
     ''')
 
-    # 2. CRIA A TABELA DE USUÁRIOS
+    # --- PARTE 2: CRIA TABELA DE USUÁRIOS ---
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,7 +33,7 @@ def inicializar_banco():
         )
     ''')
     
-    # 3. VERIFICA E CRIA O ADMIN
+    # --- PARTE 3: CRIA O ADMIN (GARANTIDO) ---
     cursor.execute("SELECT * FROM usuarios WHERE username = ?", ('admin',))
     usuario = cursor.fetchone()
     
@@ -42,10 +42,10 @@ def inicializar_banco():
         conn.commit()
         print("✅ Usuário ADMIN criado com sucesso!")
     
-    conn.commit()
+    conn.commit() # Salva tudo no final
     conn.close()
 
-# --- MANTENHA A CHAMADA DA FUNÇÃO AQUI EMBAIXO ---
+# IMPORTANTE: Mantenha a chamada da função aqui embaixo
 inicializar_banco()
 # --- SEUS SERVIÇOS ---
 servicos = [
@@ -207,3 +207,4 @@ def excluir_agendamento(id):
 
 if __name__ == '__main__':
     app.run(debug=True)
+    # Forcando atualizacao agora vai
