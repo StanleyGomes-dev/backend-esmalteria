@@ -37,27 +37,6 @@ def inicializar_banco():
 # --- IMPORTANTE: CHAMAR A FUNÇÃO PARA ELA RODAR ---
 inicializar_banco()
 
-# --- CONFIGURAÇÃO DO BANCO DE DADOS (SQLite) ---
-def init_db():
-    conn = sqlite3.connect('agendamentos.db')
-    cursor = conn.cursor()
-    # Cria a tabela se ela não existir
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS agendamentos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cliente TEXT NOT NULL,
-            whatsapp TEXT,
-            servico TEXT NOT NULL,
-            data TEXT NOT NULL,
-            horario TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-# Roda a criação do banco assim que o Python liga
-init_db()
-
 # --- SEUS SERVIÇOS ---
 servicos = [
     {'id': 1, 'nome': 'Manicure Simples', 'preco': 35},
@@ -179,14 +158,28 @@ def listar_agendamentos():
 @app.route('/api/login', methods=['POST'])
 def login():
     dados = request.json
-    usuario = dados.get('usuario')
-    senha = dados.get('senha')
+    usuario_form = dados.get('usuario')
+    senha_form = dados.get('senha')
 
-    # Aqui definimos a senha fixa (depois podemos melhorar)
-    if usuario == 'admin' and senha == 'admin123':
-        return jsonify({'mensagem': 'Login aprovado!', 'token': 'acesso-liberado'})
+    # 1. Conecta no banco para conferir a senha
+    conn = sqlite3.connect('agendamentos.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    # 2. Busca o usuário que a pessoa digitou
+    cursor.execute("SELECT * FROM usuarios WHERE username = ?", (usuario_form,))
+    usuario_banco = cursor.fetchone()
+    conn.close()
+
+    # 3. Verifica: O usuário existe? A senha bate?
+    if usuario_banco and usuario_banco['senha'] == senha_form:
+        return jsonify({
+            'mensagem': 'Login aprovado!', 
+            'token': 'acesso-liberado-vip',
+            'usuario': usuario_banco['username']
+        })
     else:
-        return jsonify({'mensagem': 'Senha incorreta!'}), 401
+        return jsonify({'mensagem': 'Usuário ou senha incorretos!'}), 401
     
     # ROTA PARA EXCLUIR AGENDAMENTO
 @app.route('/api/agendamentos/<int:id>', methods=['DELETE'])
