@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento Esmalteria</title>
+    <style>
+        /* Estilo Dark inspirado no Cardápio da sua irmã */
+        body { font-family: sans-serif; background-color: #121212; color: #f5f5f5; display: flex; justify-content: center; padding: 20px; }
+        .container { background-color: #1e1e1e; padding: 30px; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid #333; }
+        h1 { text-align: center; color: #d4af37; /* Dourado */ margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; color: #aaa; }
+        select, input, button { width: 100%; padding: 12px; margin-top: 5px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 8px; font-size: 16px; }
+        button { background-color: #d4af37; color: #121212; font-weight: bold; cursor: pointer; margin-top: 25px; border: none; transition: 0.3s; }
+        button:hover { background-color: #b5952f; }
+        .horarios-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .horario-btn { background: #333; border: 1px solid #555; cursor: pointer; text-align: center; padding: 10px; border-radius: 5px; }
+        .horario-btn.selected { background-color: #d4af37; color: black; border-color: #d4af37; }
+        .aviso { font-size: 0.9em; color: #888; text-align: center; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>💅 Agendar Horário</h1>
+
+        <label>Qual procedimento?</label>
+        <select id="servicoSelect">
+            <option>Carregando serviços...</option>
+        </select>
+
+        <label>Para quando?</label>
+        <input type="date" id="dataInput">
+        <p class="aviso" id="msgData">Selecione uma data para ver os horários</p>
+
+        <div id="divHorarios" style="display: none;">
+            <label>Horários Disponíveis:</label>
+            <div class="horarios-grid" id="gridHorarios">
+                </div>
+        </div>
+
+        <button onclick="finalizarAgendamento()">Confirmar Agendamento</button>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:5000/api";
+        let horarioSelecionado = null;
+
+        // 1. Ao abrir o site, busca os serviços no Back-end
+        async function carregarServicos() {
+            try {
+                const resposta = await fetch(`${API_URL}/servicos`);
+                const servicos = await resposta.json();
+                
+                const select = document.getElementById('servicoSelect');
+                select.innerHTML = ""; // Limpa o "Carregando..."
+                
+                servicos.forEach(servico => {
+                    select.innerHTML += `<option value="${servico.id}">${servico.nome} - R$ ${servico.preco}</option>`;
+                });
+            } catch (erro) {
+                alert("Erro ao conectar com o servidor. O Python está rodando?");
+            }
+        }
+
+       // 2. Quando o usuário muda a data, busca os horários
+        document.getElementById('dataInput').addEventListener('change', async function() {
+            const data = this.value;
+            if (!data) return;
+
+            const divHorarios = document.getElementById('divHorarios');
+            const grid = document.getElementById('gridHorarios');
+            const msg = document.getElementById('msgData');
+
+            // Chama a API
+            const resposta = await fetch(`${API_URL}/horarios?data=${data}`);
+            const json = await resposta.json();
+
+            // --- AQUI ESTAVA O ERRO ---
+            // Antes era json.tipo_dia, agora é json.mensagem
+            msg.innerText = json.mensagem; 
+            
+            divHorarios.style.display = 'block';
+            grid.innerHTML = ""; 
+
+            // Antes era json.horarios_disponiveis, agora é json.horarios
+            if (json.horarios) {
+                json.horarios.forEach(hora => {
+                    const btn = document.createElement('div');
+                    btn.className = 'horario-btn';
+                    btn.innerText = hora;
+                    btn.onclick = () => selecionarHora(btn, hora);
+                    grid.appendChild(btn);
+                });
+            }
+        });
+
+        function selecionarHora(elemento, hora) {
+            // Remove a seleção dos outros
+            document.querySelectorAll('.horario-btn').forEach(b => b.classList.remove('selected'));
+            // Marca o atual
+            elemento.classList.add('selected');
+            horarioSelecionado = hora;
+        }
+
+        function finalizarAgendamento() {
+            if(!horarioSelecionado) return alert("Por favor, escolha um horário!");
+            alert(`Agendamento enviado para aprovação!\nData: ${document.getElementById('dataInput').value}\nHorário: ${horarioSelecionado}`);
+        }
+
+        // Inicia tudo
+        carregarServicos();
+    </script>
+</body>
+</html>
