@@ -12,7 +12,19 @@ def inicializar_banco():
     conn = sqlite3.connect('agendamentos.db')
     cursor = conn.cursor()
     
-    # 1. Garante que a tabela de usuários existe
+    # 1. CRIA A TABELA DE AGENDAMENTOS (Esta parte estava faltando!)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS agendamentos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cliente TEXT NOT NULL,
+            whatsapp TEXT,
+            servico TEXT NOT NULL,
+            data TEXT NOT NULL,
+            horario TEXT NOT NULL
+        )
+    ''')
+
+    # 2. CRIA A TABELA DE USUÁRIOS
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,22 +33,20 @@ def inicializar_banco():
         )
     ''')
     
-    # 2. Verifica se o admin já existe
+    # 3. VERIFICA E CRIA O ADMIN
     cursor.execute("SELECT * FROM usuarios WHERE username = ?", ('admin',))
     usuario = cursor.fetchone()
     
-    # 3. Se não existir, cria o ADMIN padrão
     if not usuario:
-        # ATENÇÃO: Aqui definimos a senha padrão 'admin123'
         cursor.execute("INSERT INTO usuarios (username, senha) VALUES (?, ?)", ('admin', 'admin123'))
         conn.commit()
         print("✅ Usuário ADMIN criado com sucesso!")
     
+    conn.commit()
     conn.close()
 
-# --- IMPORTANTE: CHAMAR A FUNÇÃO PARA ELA RODAR ---
+# --- MANTENHA A CHAMADA DA FUNÇÃO AQUI EMBAIXO ---
 inicializar_banco()
-
 # --- SEUS SERVIÇOS ---
 servicos = [
     {'id': 1, 'nome': 'Manicure Simples', 'preco': 35},
