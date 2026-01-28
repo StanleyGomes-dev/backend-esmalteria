@@ -6,6 +6,37 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
+# --- COLOCAR LOGO NO COMEÇO DO ARQUIVO, APÓS OS IMPORTS ---
+
+def inicializar_banco():
+    conn = sqlite3.connect('agendamentos.db')
+    cursor = conn.cursor()
+    
+    # 1. Garante que a tabela de usuários existe
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            senha TEXT NOT NULL
+        )
+    ''')
+    
+    # 2. Verifica se o admin já existe
+    cursor.execute("SELECT * FROM usuarios WHERE username = ?", ('admin',))
+    usuario = cursor.fetchone()
+    
+    # 3. Se não existir, cria o ADMIN padrão
+    if not usuario:
+        # ATENÇÃO: Aqui definimos a senha padrão 'admin123'
+        cursor.execute("INSERT INTO usuarios (username, senha) VALUES (?, ?)", ('admin', 'admin123'))
+        conn.commit()
+        print("✅ Usuário ADMIN criado com sucesso!")
+    
+    conn.close()
+
+# --- IMPORTANTE: CHAMAR A FUNÇÃO PARA ELA RODAR ---
+inicializar_banco()
+
 # --- CONFIGURAÇÃO DO BANCO DE DADOS (SQLite) ---
 def init_db():
     conn = sqlite3.connect('agendamentos.db')
